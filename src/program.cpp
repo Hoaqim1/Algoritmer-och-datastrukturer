@@ -1,12 +1,11 @@
 #include <iostream>
-#include <vector>
 #include <windows.h>
-
 #include "eventfunc.h"
+#include "eventLog.h"
 
 
 int main () {
-    std::vector<Event> log;
+    Eventlog log = log_create(16);
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
@@ -15,7 +14,7 @@ int main () {
     do {
         std::cout << "1. Skapa ett event " << '\n';
         std::cout << "2. Utskrift av info från loggen" << '\n';
-        std::cout << "3. Sortera utifrån namn" << '\n';
+        std::cout << "3. Sortera utifrån tid" << '\n';
         std::cout << "4. Hitta specifik sensor" << '\n';
         std::cout << "5. Hjälpfunktion" << '\n';
         std::cout << "6. Stäng av programmet." << '\n';
@@ -34,18 +33,25 @@ int main () {
     switch (choice){
         case 1: { 
         Event e = createEvent();
-        log.push_back(e);
+        log_append(log, e);
         std::cout << "Event skapad med ts " << e.timestamp << '\n';
             break;
             }
 
         case 2: 
-        printlog(log);
+        printLog(log);
             break;
            
 
         case 3:
-        //sort <name>;
+        sortbyTS(log);
+        std::cout << "Sorterad" << '\n';
+        if (sortedbyTS(log)) {
+            std::cout << "Check JA" << '\n';
+        }
+        else {
+            std::cout << "Check NEJ" << '\n';
+        }
             break;
 
         case 4: { 
@@ -57,6 +63,7 @@ int main () {
             std::cout << "Ogiltig inmatning" << '\n';
             std::cin.clear();
             std::cin.ignore(1000, '\n');
+            break;
         }
             findSensor(log, sensId);
             break;
@@ -76,8 +83,6 @@ int main () {
 
         } while(choice != 6);
 
+        log_destroy(log);
         return 0;
-
-
-
-    }
+}

@@ -1,11 +1,10 @@
 #pragma once
-#include <vector>
 
 #include "event.h"
+#include "eventLog.h"
 
 Event createEvent();
-void printlog(const std::vector<Event>& log);
-void findSensor(const std::vector<Event>& log, int sensorId);
-void findSensor(const std::vector<Event>& log, int sensorId);
-void sortTimestamp(std::vector<Event>& log);
-bool isSortedTs(const std::vector<Event>& log);
+void printLog(const Eventlog& log);
+void findSensor(const Eventlog& log, int sensorId);
+void sortbyTS(Eventlog& log);
+bool sortedbyTS(const Eventlog& log);
