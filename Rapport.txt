@@ -1,0 +1,33 @@
+Lösning
+
+Detta program skapar events som innehåller timestamp, sensorId, type och value. Den består utav tre ADT:er vilket är:
+EventLog
+Dynamisk logg som lagrar events med en dynamisk array
+EventQue
+Kö som använder FIFO för att lagra events innan de läggs in i loggen
+AlarmSet
+Struktur jag skapade för att lagra sensorer som triggat ett alarm baserat på ett tröskelvärde som användaren sätter.
+
+Allt styrs via en meny där tick <n> skapar n nya events som läggs i en kö och sedan tas ut ur kön, kontrolleras mot AlarmSet och sedan lagras i en logg.
+
+Strategy-light
+Använde mig utav funktionspekare SortFn, användare kan använda kommandot sort <name> för att välja en sorteringsfunktion. Finns bara insertion sort men om
+fler sorteringsfunktioner funnits så hade man kunnat välja mellan fler där. Det går att lägga till nya sorteringsalgoritmer utan att behöva ändra i huvudprogrammet
+
+Tidskomplexitet
+Då loggen sorteras med insertion sort så är best case O(n) om loggen redan är sorterad.
+Worst case är O(n²) om elementen är i omvänd ordning
+
+Valde insertion sort då det är enkelt och tillräckligt för en mindre mängd data. 
+
+Sökfunktionen find <id> använder bara linjär sökning vilket blir O(n)
+
+Minneshantering
+EventLog allokerar minne för en array av events som kan dynamiskt ändra storlek om den uppnår full kapacitet. Detta gör den genom att allokera mer minne om den
+blir full, data försvinner ej om detta sker.
+EventQue
+Har ett fast minnesblock för ringbufferten
+AlarmSet
+Dynamisk allokering av minne för att lagra sensorer som triggat alarm.
+
+Finns en destroy funktion för varje struktur som frigör minnet när programmet avslutas.
