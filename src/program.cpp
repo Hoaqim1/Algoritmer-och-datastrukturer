@@ -1,88 +1,122 @@
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <windows.h>
 #include "eventfunc.h"
 #include "eventLog.h"
+#include "eventQue.h"
+#include "AlarmSet.h"
 
+void help() {
+    std::cout << "tick <n>" << '\n';
+    std::cout << "print" << '\n';
+    std::cout << "sort <name>" << '\n';
+    std::cout << "find <id>" << '\n';
+    std::cout << "alarms" << '\n';
+    std::cout << "setThreshold <n>" << '\n';
+    std::cout << "help" << '\n';
+    std::cout << "exit" << '\n';
+}
 
-int main () {
-    Eventlog log = log_create(16);
+int main() {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
-    int choice = 0;
+    Eventlog log = log_create(16);
+    EventQue q = que_create(8);
 
-    do {
-        std::cout << "1. Skapa ett event " << '\n';
-        std::cout << "2. Utskrift av info från loggen" << '\n';
-        std::cout << "3. Sortera utifrån tid" << '\n';
-        std::cout << "4. Hitta specifik sensor" << '\n';
-        std::cout << "5. Hjälpfunktion" << '\n';
-        std::cout << "6. Stäng av programmet." << '\n';
-        
-        std::cin >> choice;
+    AlarmSet alarms = alarm_create(4);
+    int threshold = 25;
 
-        if (!std::cin) {
-            std::cout << "Ogiltig inmatning" << '\n';
-            std::cin.clear();
-            std::cin.ignore(1000, '\n');
-            continue;
+    help();
+
+    std::string line;
+    while (true) {
+        std::cout << "> ";
+        if (!std::getline(std::cin, line)) break;
+
+        std::istringstream iss(line);
+        std::string cmd;
+        iss >> cmd;
+
+        if (cmd == "exit") {
+            break;
         }
+        else if (cmd == "help") {
+            help();
+        }
+        else if (cmd == "print") {
+            printLog(log);
+        }
+        else if (cmd == "find") {
+            int id;
+            if (iss >> id) findSensor(log, id);
+            else std::cout << "find <id>" << '\n';
+        }
+        else if (cmd == "sort") {
+            std::string name;
+            if (!(iss >> name)) {
+                std::cout << "sort <name>" << '\n';
+                continue;
+            }
+
+            SortFn fn = getSortFn(name);
+            if (fn) fn(log);
+            else std::cout << "okänd sort" << '\n';
+        }
+        else if (cmd == "tick") {
+            int n;
+            if (!(iss >> n)) {
+                std::cout << "tick <n>" << '\n';
+                continue;
+            }
+
+            for (int i = 0; i < n; i++) {
+                Event e = createEvent();
+                que_que(q, e);
+
+                Event out;
+                if (que_deque(q, out)) {
+                    checkAlarm(out, alarms, threshold);
+                    log_append(log, out);
+                }
+            }
+
+            std::cout << "okej" << '\n';
+        }
+
+        else if (cmd == "alarms") {
+            if (alarms.size == 0) {
+                std::cout << "Inga alarm" << '\n';
+            } 
+            else {
+                std::cout << "Alarm: ";
+                for (int i = 0; i < alarms.size; i++) {
+                    std::cout << alarms.sensors[i] << " ";
+                }
+                                std::cout << '\n';
+            }
+        }
+
+        else if (cmd == "setThreshold") {
+            int newThreshold;
+            if (iss >> newThreshold) {
+                threshold = newThreshold;
+                std::cout << "Threshold: " << threshold << '\n';
+            }
+            else {
+                std::cout << "setThreshold <n>" << '\n';
+        }
+    }
+
+        else {
+            std::cout << "Ogiltig Inmatning" << '\n';
+        }
+    }
     
 
-
-    switch (choice){
-        case 1: { 
-        Event e = createEvent();
-        log_append(log, e);
-        std::cout << "Event skapad med ts " << e.timestamp << '\n';
-            break;
-            }
-
-        case 2: 
-        printLog(log);
-            break;
-           
-
-        case 3:
-        sortbyTS(log);
-        std::cout << "Sorterad" << '\n';
-        if (sortedbyTS(log)) {
-            std::cout << "Check JA" << '\n';
-        }
-        else {
-            std::cout << "Check NEJ" << '\n';
-        }
-            break;
-
-        case 4: { 
-        int sensId;
-        std::cout << "Skriv in sensorId: ";
-        std::cin >> sensId;
-
-        if (!std::cin) {
-            std::cout << "Ogiltig inmatning" << '\n';
-            std::cin.clear();
-            std::cin.ignore(1000, '\n');
-            break;
-        }
-            findSensor(log, sensId);
-            break;
-            }
-
-        case 5:
-        //help;
-            break;
-        
-        case 6:
-        //exit;
-            break;
-
-        default:
-        std::cout << "Ogiltig inmatning, välj mellan 1-6" << '\n';
-        }
-
-        } while(choice != 6);
-
-        log_destroy(log);
-        return 0;
+    que_destroy(q);
+    log_destroy(log);
+    alarm_destroy(alarms);
+    return 0;
 }

@@ -12,6 +12,11 @@ Event createEvent() {
     return e;
 }
 
+SortFn getSortFn(const std::string& name) {
+    if (name == "insertion") return &sortbyTS;
+    return nullptr;
+}
+
 void printLog(const Eventlog& log) {
     int n = log_size(log);
     if (n == 0) {
@@ -71,3 +76,22 @@ bool sortedbyTS(const Eventlog& log) {
     }
     return true;
 }
+
+void checkAlarm(Event e, AlarmSet& alarms, int threshold) {
+    if (e.type == TEMP) {
+        if (e.value > threshold) {
+            if (!alarm_contains(alarms, e.sensorId)) {
+                alarm_add(alarms, e.sensorId);
+                std::cout << "alarm! Sensor " << e.sensorId << "Har triggats med värde: " << e.value << '\n';
+            }
+        }
+            else {
+                if (alarm_contains(alarms, e.sensorId)) {
+                    alarm_remove(alarms, e.sensorId);
+                    std::cout << "Sensor under threshold. " << e.sensorId << "Värdet är: " << e.value << '\n';
+            }
+        }
+    }
+}
+
+
